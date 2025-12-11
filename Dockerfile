@@ -1,7 +1,6 @@
-# --- Base Image (Debian with Python) ---
 FROM python:3.9-slim
 
-# --- Install OS-level deps for dlib, face_recognition, opencv ---
+# install system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake \
     libopenblas-dev liblapack-dev libatlas-base-dev \
@@ -11,28 +10,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# --- Copy requirements early for caching ---
+# Copy requirements first
 COPY requirements.txt .
 
-# --- Install optimized packages ---
+# upgrade pip
 RUN pip install --upgrade pip
 
-# Install prebuilt wheels to avoid compilation (instant install)
+# install prebuilt wheels (skips compilation)
 RUN pip install \
     dlib==19.24.4 \
     face-recognition==1.3.0 \
     face-recognition-models==0.3.0 \
     opencv-python-headless
 
-# Install all other Python packages
+# install normal dependencies
 RUN pip install -r requirements.txt
 
-# --- Copy the rest of your app ---
+# copy app code
 COPY . .
 
-# Expose the port Flask uses
-ENV PORT=8080
+ENV PORT 8080
 EXPOSE 8080
 
-# Run using gunicorn (production)
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
