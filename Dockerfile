@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-# Install system packages (compatible with Debian Trixie)
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential cmake \
     libopenblas-dev liblapack-dev \
@@ -10,25 +10,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy requirements first
 COPY requirements.txt .
 
 RUN pip install --upgrade pip
 
-# Install prebuilt wheels (NO COMPILATION)
+# --- Install precompiled dlib wheel (NO build, instant install) ---
+RUN wget https://github.com/datamagic2020/dlib-prebuilt/releases/download/v19.24.0/dlib-19.24.0-cp39-cp39-linux_x86_64.whl \
+    && pip install dlib-19.24.0-cp39-cp39-linux_x86_64.whl
+
+# Install face-recognition & opencv (these DO NOT compile)
 RUN pip install \
-    dlib==19.24.4 \
     face-recognition==1.3.0 \
-    face-recognition-models==0.3.0 \
     opencv-python-headless
 
-# Install remaining Python packages
+# Install remaining dependencies
 RUN pip install -r requirements.txt
 
-# Copy app code
 COPY . .
 
-ENV PORT 8080
+ENV PORT=8080
 EXPOSE 8080
 
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
